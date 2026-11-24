@@ -2,7 +2,9 @@
 
 > Arquivo de referência para retomar o trabalho após parada inesperada.
 > Projeto: extensão Chrome MV3 "GENFY — YouTube Intelligence".
-> Raiz: `/home/fabiano/Documentos/genfy`. Sem repositório Git (apenas arquivos locais).
+> Raiz: `/home/fabiano/Documentos/genfy`.
+> Git (desde 24/11/2026): remote `https://github.com/masternetfmoraes/genfy.git`;
+> `main` e `feature/genfy-dashboard` publicadas; projeto em `84da52e`.
 
 ## 1. Visão geral
 
@@ -35,11 +37,11 @@ publicação/agendamento de vídeos diretamente no navegador (sem backend).
 - `npm run build:css` — gera `src/styles/output.css` (Tailwind v4 minificado).
 - `npm run watch:css` — rebuild contínuo.
 - `npm run lint` — `node --check` em todos JS/MJS + validação do manifest/imports.
-- `npm test` — runner nativo do Node (`node --test`), 95 testes, 0 falhas.
+- `npm test` — runner nativo do Node (`node --test`), 101 testes, 0 falhas.
 - `npm run validate` — lint + testes.
 - CI: `.github/workflows/ci.yml` (Node 22, lint, test, build:css).
 
-Estado atual verificado: **lint OK (59 arquivos)**, **95/95 testes passando**.
+Estado atual verificado: **lint OK (61 arquivos)**, **101/101 testes passando**.
 
 ## 3. Manifest (MV3)
 
@@ -56,7 +58,7 @@ src/
   pages/dashboard.html, popup.html
   scripts/
     background.js, popup.js, constants.js, config.js
-    core/           analysis.js, csv.js, format.js, i18n.js, quota.js
+     core/           analysis.js, comments.js, csv.js, format.js, i18n.js, quota.js
     pages/dashboard/ app.js (boot/controller), state.js, render.js, enhancements.js, charts.js
     services/       storage.js
     services/entitlement/  entitlementClient.js, mockAdapter.js, httpAdapter.js, plans.js, errors.js
@@ -66,7 +68,7 @@ src/
     ui/ designSystem.js, theme.js
   styles/ input.css, output.css, genfy-theme.css
   assets/icons/
-test/  (15 arquivos *.test.js)
+test/  (16 arquivos *.test.js)
 scripts/lint.mjs
 ```
 
@@ -111,16 +113,19 @@ Login manual: `handleSignIn` → `signIn()` (interactive, escopo readonly) → `
 - `SCOPE_YOUTUBE` = youtube.readonly (login base).
 - `SCOPE_ANALYTICS` = yt-analytics.readonly (incremental via `authorizeAnalytics`).
 - `SCOPE_PUBLISH` = youtube (incremental via `authorizePublish`).
-- Sessão persistida em `genfy_session` (signedIn, analytics, publish).
+- `SCOPE_COMMENTS` = youtube.force-ssl (incremental via `authorizeComments`, necessário para `commentThreads.list`).
+- Sessão persistida em `genfy_session` (signedIn, analytics, publish, comments).
 - Tokens emitidos rastreados em `issuedTokens` para limpeza.
-- 401/403 tratados com refresh; permissão revogada marca flags.
+- 401/403 tratados com refresh; 403 `insufficientPermissions` em comentários marca `commentsGranted = false`.
+- O `manifest.json` mantém apenas `youtube.readonly`; escopos extras são pedidos em runtime.
+- A tela de consentimento do Cloud Console precisa incluir `youtube.force-ssl` (senão: `invalid_scope`).
 
 ## 8. Storage keys (constants.js)
 
 - `genfy_channel_cache`, `genfy_prefs`, `genfy_scheduler_cache`, `genfy_checklist_cache`,
   `genfy_publications_cache`, `genfy_youtube_quota`, `genfy_youtube_metadata_cache`,
-  `genfy_session`, `genfy_analytics_<channel>_<period>`, `genfy_gemini_api_key`,
-  `genfy_gemini_settings`, `genfy_mock_entitlement` (somente modo simulado).
+  `genfy_session`, `genfy_analytics_<channel>_<period>`, `genfy_trending_cache`,
+  `genfy_gemini_api_key`, `genfy_gemini_settings`, `genfy_mock_entitlement` (somente modo simulado).
 
 
 ## 9. Publicação (detalhes)
@@ -144,12 +149,13 @@ Login manual: `handleSignIn` → `signIn()` (interactive, escopo readonly) → `
 
 ## 11. Testes
 
-15 arquivos em `test/`: analysis, charts, csv, dateRange, engagement, entitlement, exporters,
-format, geminiAi, i18n, modules, publishing, youtubeApi, youtubeService, youtubeTrending. Cobrem
-funções puras, validação, upload, metadados, cota, status de publicações, módulos,
-classificação de erros do Gemini, retry/migração de modelo, CSV/XLS/PDF de análise,
-tendências, o backend simulado de assinaturas, a ordenação de conteúdo e os gráficos do
-Channel Health. Todos passando (95).
+16 arquivos em `test/`: analysis, charts, comments, csv, dateRange, engagement, entitlement,
+exporters, format, geminiAi, i18n, modules, publishing, youtubeApi, youtubeService,
+youtubeTrending. Cobrem funções puras, validação, upload, metadados, cota, status de
+publicações, módulos, classificação de erros do Gemini, retry/migração de modelo,
+CSV/XLS/PDF de análise, tendências, comentários (agrupamento/ordenação/paginação),
+`withReplies`, o backend simulado de assinaturas, a ordenação de conteúdo e os gráficos do
+Channel Health. Todos passando (101).
 
 ## 12. Limitações conhecidas
 
@@ -168,7 +174,8 @@ Channel Health. Todos passando (95).
 > (`modules/youtube/publishing`), via `status.publishAt`. O mount point
 > `#genfy-publication-root` permanece na seção "schedule" (renomeada para "Publicação no YouTube").
 
-- Não há Git: alterações não versionadas; fazer backup antes de grandes mudanças.
+- Git ativo desde 24/11/2026 (`main` + `feature/genfy-dashboard`); `node_modules/` ignorado.
+- Antes de mudanças grandes, crie branch e faça commit; backup antigo em `/tmp/opencode/genfy-rollback/`.
 - `output.css` é gerado; não editar manualmente (rebuild via script).
 - Lint não cobre estilo/unused; apenas sintaxe + imports + manifest.
 - Tests importam módulos ESM; rodar com Node 20+.
@@ -184,9 +191,8 @@ Channel Health. Todos passando (95).
 - Testes de UI/DOM (atualmente apenas funções puras).
 - Melhorar tratamento de erro de upload (retomada).
 - Documentar endpoints/contratos da publishing API.
-- Adicionar versionamento/CHANGELOG.
-- Considerar Git init para controle de mudanças.
-- Validar na prática a análise Gemini individual por vídeo após o ajuste de 503/modelos (seção 17); se falhar, reverter conforme o plano da seção 16.
+- Adicionar CHANGELOG (Git já versionado; histórico em `git log`).
+- Validar no Chrome o fluxo de comentários após aceitar `youtube.force-ssl` e a nova posição de "Em alta".
 
 ## 15. Histórico: integração Gemini removida em 17/11/2026
 
@@ -497,7 +503,7 @@ Troca para o backend real:
    (concluída, atualizada, cancelada/reembolsada) para atualizar o plano do `sub`.
 6. Mover a chamada ao Gemini para o backend, retirando a chave da extensão.
 
-Validação: `npm run validate` → lint OK (59 JS) e 95/95 testes.
+Validação histórica: `npm run validate` → lint OK (59 JS) e 95/95 testes.
 
 ## 24. Gráficos no card "GENFY Channel Health" (21/11/2026)
 
@@ -526,4 +532,66 @@ Mudanças:
 - `src/styles/output.css` reconstruído com `npm run build:css` para incluir as novas
   classes Tailwind das cores/legendas; não editar esse arquivo manualmente.
 
-Validação: `npm run validate` → lint OK (59 JS) e 95/95 testes; `npm run build:css` → OK.
+Validação histórica: `npm run validate` → lint OK (59 JS) e 95/95 testes; `npm run build:css` → OK.
+
+## 25. Comentários completos na Análise Técnica (24/11/2026)
+
+Pedido: na aba **Comentários** da Análise Técnica, carregar todos os comentários dos vídeos,
+agrupados por vídeo, com paginação e modal para listas grandes. Decisão explícita do usuário:
+**"Não quero que o Gemini analise os comentários!!"** — os prompts do Gemini seguem sem comentários.
+
+Mudanças:
+- `src/scripts/core/comments.js` (novo): normalização de snippet, agrupamento por vídeo,
+  ordenação `newest`/`most`, paginação; constantes `COMMENTS_PAGE_SIZE = 5`,
+  `COMMENTS_MODAL_PAGE_SIZE = 10`, `COMMENTS_MAX_PAGES_PER_VIDEO = 20`.
+- `state.js`: `commentsSort`, `commentsPage`, `commentsModal`, `commentsLoadedAt`; valores
+  legados `time`/`relevance` convertidos para `newest`/`most`.
+- `youtubeApi.js`: `getCommentThreads(..., { withReplies = false })` passa
+  `part=snippet,replies` quando solicitado.
+- `app.js`: `fetchAllVideoComments()` pagina `commentThreads.list` com `maxResults=100` (até
+  20 páginas/vídeo), deduplica, mantém respostas inline, trata `401` com refresh, aborta em
+  esgotamento de cota e mostra erros parciais. `loadContentComments()` pede o escopo de
+  comentários antes de buscar e trata `403 insufficientPermissions` com mensagem para
+  clicar em "Carregar comentários" novamente.
+- `render.js`: painel com preview de 5 comentários, botão "Ver todos os N comentários",
+  5 vídeos por página e modal `#genfy-comments-modal` com 10 comentários por página.
+- `youtubeAuth.js`: `SCOPE_COMMENTS = https://www.googleapis.com/auth/youtube.force-ssl`,
+  `commentsGranted`, `scopesFor(withAnalytics, withPublish, withComments)`,
+  `applyToken(..., requestedComments)`, `hasCommentsScope()`, `authorizeComments()` e
+  `markCommentsNotGranted()`; restore/refresh preservam a flag. O discovery doc confirma que
+  `commentThreads.list` exige `force-ssl`, não `youtube.readonly`.
+
+Validação: smoke `open-all-ok`, `preview-5-ok`, `modal-ok`, `reply-ok`, `sort-ok`, `button-ok`;
+`npm run validate` → lint OK (61 JS) e 101/101 testes. Se aparecer `invalid_scope`, incluir
+`youtube.force-ssl` na tela de consentimento OAuth do Cloud Console.
+
+## 26. Em alta no YouTube — posição final e tentativas revertidas (24/11/2026)
+
+Pedido final: a seção **Em alta no YouTube** deve ficar logo abaixo da área de Vídeos da
+Análise Técnica (onde fica a ordenação "Melhor desempenho"), antes de "Comparações".
+
+- `app.js`: `${view.renderTrending()}` saiu de depois de `renderTrends()` e agora fica
+  logo após `renderTechAnalysis(videos, perf)`.
+- `sidebar.js`: item `viral` reordenado para depois de `techAnalysis`, acompanhando a ordem
+  do DOM usada pelo scroll-spy.
+- Tentativas **revertidas** (não devem ser reintroduzidas sem novo pedido): degustação com
+  3 dados reais (`TRENDING_TASTE_RESULTS`, `useCache`, `state.trending.sample`) e prévia Pro
+  com IA (`TRENDING_AI_PREVIEW_KEY`, `analyzeTrending`, `buildTrendingAnalysisPrompt`,
+  `renderTrendingAi*`, handlers e modal `#genfy-trending-ai-modal`). Nada disso permanece.
+- Validação: `npm run validate` → lint OK (61 JS) e 101/101 testes; `npm run build:css` → OK.
+
+## 27. Git e publicação no GitHub (24/11/2026)
+
+- `git init -b main`; commit inicial `aa0755e` ("first commit") com o README **existente**
+  e `.gitignore`. O `# genfy` das instruções genéricas do GitHub **não** foi acrescentado
+  para não duplicar o título já documentado.
+- Branch `feature/genfy-dashboard` criada antes do commit do projeto; commit `84da52e`
+  ("feat: add GENFY dashboard and integrations") com 76 arquivos, sem `node_modules`.
+- Push da branch com `git push -u origin feature/genfy-dashboard`.
+- Merge local com `git merge --ff-only feature/genfy-dashboard` em `main` e push com
+  `git push -u origin main`.
+- Remote: `https://github.com/masternetfmoraes/genfy.git`. `main` e
+  `feature/genfy-dashboard` publicadas; merge fast-forward concluído em `84da52e`.
+- `gh` não estava instalado, então não houve PR: o merge foi feito diretamente com Git.
+  Identidade dos commits: `masternetfmoraes <masternetfmoraes@users.noreply.github.com>`
+  (passada por variáveis de ambiente, sem alterar `git config`).
