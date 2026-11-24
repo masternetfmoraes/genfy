@@ -1,0 +1,21 @@
+{
+  "name": "genfy-extension",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GENFY — dashboard de inteligência para YouTube (extensão Chrome MV3)",
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./src/styles/output.css --minify",
+    "watch:css": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./src/styles/output.css --watch",
+    "lint": "node scripts/lint.mjs",
+    "test": "node --test",
+    "validate": "npm run lint && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}

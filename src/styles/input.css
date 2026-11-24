@@ -1,0 +1,52 @@
+@import "tailwindcss";
+@import "./genfy-theme.css";
+
+/* =====================================================================
+   TAILWIND 4 — dark mode baseado em classe
+   Sem isto, `dark:` segue APENAS prefers-color-scheme e o botão de tema
+   não funciona. Esta é a correção central do sistema de temas.
+   ===================================================================== */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* =====================================================================
+   TOKENS DE MARCA — edite aqui para trocar a identidade do GENFY
+   ===================================================================== */
+@theme {
+  --color-genfy-primary:        #4f46e5;   /* indigo-600 */
+  --color-genfy-primary-hover:  #4338ca;   /* indigo-700 */
+  --color-genfy-primary-soft:   #eef2ff;
+  --color-genfy-danger:         #dc2626;
+  --color-genfy-danger-hover:   #b91c1c;
+  --color-genfy-success:        #16a34a;
+  --color-genfy-warning:        #d97706;
+}
+
+/* =====================================================================
+   BASE — defaults coerentes entre temas
+   ===================================================================== */
+@layer base {
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
+
+  body {
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Foco visível consistente em todo o app */
+  :focus-visible {
+    outline: 2px solid var(--color-genfy-primary);
+    outline-offset: 2px;
+  }
+
+  /* Acessibilidade: respeitar prefers-reduced-motion globalmente */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

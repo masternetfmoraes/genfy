@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "GENFY",
+  "version": "1.0.0",
+  "description": "Dashboard de inteligência para YouTube: desempenho, público, tendências e ferramentas de criação.",
+  "minimum_chrome_version": "102",
+  "permissions": [
+    "identity",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.googleapis.com/*",
+    "https://youtubeanalytics.googleapis.com/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "oauth2": {
+    "client_id": "859257702685-ugj96ua20u0tpf6ehnpodc7fcn2l7oau.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/youtube.readonly"
+    ]
+  },
+  "background": {
+    "service_worker": "src/scripts/background.js"
+  },
+  "action": {
+    "default_title": "GENFY",
+    "default_popup": "src/pages/popup.html",
+    "default_icon": {
+      "16": "src/assets/icons/icon16.png",
+      "32": "src/assets/icons/icon32.png",
+      "48": "src/assets/icons/icon48.png",
+      "128": "src/assets/icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "src/assets/icons/icon16.png",
+    "32": "src/assets/icons/icon32.png",
+    "48": "src/assets/icons/icon48.png",
+    "128": "src/assets/icons/icon128.png"
+  },
+  "chrome_url_overrides": {
+    "newtab": "src/pages/dashboard.html"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  }
+}
